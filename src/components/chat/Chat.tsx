@@ -9,9 +9,8 @@ const Chat = ({
   currentChat: any;
   isCreatingChat: boolean;
 }) => {
-  console.log("isCreatingChat", isCreatingChat);
   return (
-    <div className="bg-gray-800 h-screen w-3/4">
+    <div className="flex flex-col bg-gray-800 h-screen w-3/4">
       <ChatHeader currentChat={currentChat} />
       <ChatBody currentChat={currentChat} isCreatingChat={isCreatingChat} />
     </div>

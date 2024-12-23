@@ -1,18 +1,38 @@
 import { NextResponse } from "next/server";
 import { OpenAI } from "openai";
 import { supabase } from "../../../lib/supabase";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
     const { message, chatId } = await request.json();
 
-    const chat = await supabase
-      .from("chats")
-      .select("*")
-      .eq("id", chatId)
-      .single();
+    const chat = await prisma.chat.findUnique({
+      where: {
+        id: chatId,
+      },
+    });
 
-    const url = chat.data?.url;
+    if (!chat) {
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    // Update chat with new message
+    await prisma.chat.update({
+      where: {
+        id: chatId,
+      },
+      data: {
+        messages: {
+          create: {
+            role: "user",
+            content: message,
+          },
+        },
+      },
+    });
+
+    const url = chat.url;
 
     if (!message) {
       return NextResponse.json(
@@ -33,12 +53,18 @@ export async function POST(request: Request) {
 
     const [{ embedding }] = embeddingResponse.data;
 
+    console.log(embedding);
+    console.log(embedding.length);
+
+    console.log(url);
+
     // Search for similar documents
     const { data, error } = await supabase.rpc("match_documents", {
       query_embedding: embedding,
-      match_threshold: 0.8,
+      match_threshold: 0.5,
       match_count: 5,
-      url: url,
+      // fix this - only works with null
+      input_url: null,
     });
 
     if (error) {
@@ -63,11 +89,13 @@ export async function GET(request: Request) {
   if (!chatId) {
     return NextResponse.json({ error: "Chat ID is required" }, { status: 400 });
   }
-  console.log("chatId", chatId);
-  const chat = await supabase
-    .from("chats")
-    .select("*, messages(*)")
-    .eq("id", chatId)
-    .single();
+  const chat = await prisma.chat.findUnique({
+    where: {
+      id: chatId,
+    },
+    include: {
+      messages: true,
+    },
+  });
   return NextResponse.json({ chat });
 }

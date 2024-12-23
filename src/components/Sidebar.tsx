@@ -15,7 +15,7 @@ const Sidebar = ({
   handleChatSelection: (chatId: string) => void;
 }) => {
   return (
-    <div className="bg-gray-800 h-screen w-1/4 border-r border-gray-700">
+    <div className="flex flex-col bg-gray-800 w-1/4 h-screen border-r border-gray-700 overflow-hidden">
       <button
         onClick={() => {
           setCurrentChat(null);
@@ -25,11 +25,13 @@ const Sidebar = ({
       >
         + New Chat
       </button>
-      <ChatList
-        chats={chats}
-        currentChat={currentChat}
-        handleChatSelection={handleChatSelection}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <ChatList
+          chats={chats}
+          currentChat={currentChat}
+          handleChatSelection={handleChatSelection}
+        />
+      </div>
     </div>
   );
 };

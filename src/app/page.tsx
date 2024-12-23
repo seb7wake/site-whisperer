@@ -28,11 +28,11 @@ export default function Home() {
     });
     const data = await response.json();
     console.log("current chat", data);
-    setCurrentChat(data);
+    setCurrentChat(data.chat);
   };
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex w-full">
       <Sidebar
         chats={chats}
         setCurrentChat={setCurrentChat}
