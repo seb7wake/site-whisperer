@@ -53,9 +53,6 @@ export async function POST(request: Request) {
 
     const [{ embedding }] = embeddingResponse.data;
 
-    console.log(embedding);
-    console.log(embedding.length);
-
     console.log(url);
 
     // Search for similar documents
