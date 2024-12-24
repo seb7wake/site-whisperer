@@ -56,7 +56,7 @@ const ChatBody = ({
   }
 
   return (
-    <div className="flex flex-col h-full p-4">
+    <div className="flex flex-col  flex-1 overflow-y-auto h-full p-4">
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 text-gray-300">
           {currentChat?.messages?.length === 0 ? (
