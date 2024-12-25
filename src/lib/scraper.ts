@@ -42,7 +42,7 @@ const extractTitle = ($: any) => {
   return title;
 };
 
-const extractSections = ($: any, chunkSize = 200) => {
+const extractSections = ($: any, chunkSize = 500) => {
   // Remove script and style elements
   $("script").remove();
   $("style").remove();

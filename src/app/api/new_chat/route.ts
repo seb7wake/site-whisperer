@@ -68,7 +68,6 @@ async function embedAndStoreChunk(title: string, url: string, content: string) {
       url,
       content,
       embedding,
-      created_at: new Date().toISOString(),
     });
 
     if (error) {

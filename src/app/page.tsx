@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import Chat from "../components/chat/Chat";
+import ChatBody from "@/components/chat/ChatBody";
+import ChatHeader from "@/components/chat/ChatHeader";
 
 export default function Home() {
   const [chats, setChats] = useState<any[]>([]);
@@ -17,6 +18,14 @@ export default function Home() {
     const response = await fetch("/api/chats");
     const data = await response.json();
     setChats(data);
+  };
+
+  const refetchChats = async () => {
+    const response = await fetch("/api/chats");
+    const data = await response.json();
+    setChats(data);
+    setCurrentChat(data[0]); // Get the most recently added chat
+    setIsCreatingChat(false);
   };
 
   const handleChatSelection = async (chatId: string) => {
@@ -40,7 +49,15 @@ export default function Home() {
         currentChat={currentChat}
         setIsCreatingChat={setIsCreatingChat}
       />
-      <Chat currentChat={currentChat} isCreatingChat={isCreatingChat} />
+      <div className="flex flex-col bg-gray-800 h-screen w-3/4">
+        <ChatHeader currentChat={currentChat} />
+        <ChatBody
+          currentChat={currentChat}
+          setCurrentChat={setCurrentChat}
+          isCreatingChat={isCreatingChat}
+          refetchChats={refetchChats}
+        />
+      </div>
     </div>
   );
 }

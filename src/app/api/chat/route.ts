@@ -11,6 +11,9 @@ export async function POST(request: Request) {
       where: {
         id: chatId,
       },
+      include: {
+        messages: true,
+      },
     });
 
     if (!chat) {
@@ -58,17 +61,37 @@ export async function POST(request: Request) {
     // Search for similar documents
     const { data, error } = await supabase.rpc("match_documents", {
       query_embedding: embedding,
-      match_threshold: 0.5,
+      match_threshold: 0.6,
       match_count: 5,
-      // fix this - only works with null
-      input_url: null,
+      input_url: url.endsWith("/") ? url.slice(0, -1) : url,
     });
 
     if (error) {
       throw new Error(`Error matching documents: ${error.message}`);
     }
 
-    return NextResponse.json({ matches: data });
+    const response = await respondToMessage(message, chat, data);
+
+    const updatedChat = await prisma.chat.update({
+      where: {
+        id: chatId,
+      },
+      data: {
+        messages: {
+          create: {
+            role: "assistant",
+            content: response || "",
+          },
+        },
+      },
+      include: {
+        messages: true,
+      },
+    });
+
+    const lastMessage = updatedChat.messages[updatedChat.messages.length - 1];
+
+    return NextResponse.json({ matches: data, response: lastMessage });
   } catch (error) {
     console.error("Error in chat endpoint:", error);
     return NextResponse.json(
@@ -79,6 +102,36 @@ export async function POST(request: Request) {
     );
   }
 }
+
+const respondToMessage = async (
+  message: string,
+  chat: any,
+  documents: any[]
+) => {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+  const systemMessage = `You are a helpful assistant answering questions about a webpage. 
+      Use the following relevant excerpts from the page to inform your response:
+      ${documents.map((doc) => doc.content).join("\n\n")}`;
+
+  // Get previous messages from the chat
+  const previousMessages = chat.messages.map((msg: any) => ({
+    role: msg.role,
+    content: msg.content,
+  }));
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4-turbo",
+    messages: [
+      { role: "system", content: systemMessage },
+      ...previousMessages,
+      { role: "user", content: message },
+    ],
+  });
+
+  return response.choices[0].message.content;
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
