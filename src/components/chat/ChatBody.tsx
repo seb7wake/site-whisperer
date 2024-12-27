@@ -38,7 +38,7 @@ const ChatBody = ({
     setMessage("");
     setCurrentChat((prevChat: any) => ({
       ...prevChat,
-      messages: [...prevChat.messages, { role: "user", content: message }],
+      messages: [...prevChat?.messages, { role: "user", content: message }],
     }));
     const response = await fetch("/api/chat", {
       method: "POST",
@@ -46,10 +46,15 @@ const ChatBody = ({
     });
     const data = await response.json();
     console.log(data);
-    setCurrentChat((prevChat: any) => ({
-      ...prevChat,
-      messages: [...prevChat.messages, data.response],
-    }));
+    setCurrentChat((prevChat: any) => {
+      const prevMessages = Array.isArray(prevChat?.messages)
+        ? prevChat.messages
+        : [];
+      return {
+        ...prevChat,
+        messages: [...prevMessages, data.response],
+      };
+    });
     setIsLoading(false);
   };
 

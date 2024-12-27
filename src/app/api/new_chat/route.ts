@@ -35,6 +35,14 @@ export async function POST(request: Request) {
         title,
         url,
         shortUrl,
+        messages:
+          title === ""
+            ? {
+                create: [
+                  { content: "Sorry, I wasn't able to read the URL provided." },
+                ],
+              }
+            : undefined,
       },
     });
 
