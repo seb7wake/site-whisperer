@@ -52,7 +52,7 @@ const ChatBody = ({
         : [];
       return {
         ...prevChat,
-        messages: [...prevMessages, data.response],
+        messages: prevMessages.concat(data.response),
       };
     });
     setIsLoading(false);

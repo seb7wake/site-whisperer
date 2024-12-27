@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     const newChat = await prisma.chat.create({
       data: {
-        title,
+        title: title === "" ? "Untitled Chat" : title,
         url,
         shortUrl,
         messages:

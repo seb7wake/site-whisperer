@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       query_embedding: embedding,
       match_threshold: 0.6,
       match_count: 5,
-      input_url: url.endsWith("/") ? url.slice(0, -1) : url,
+      input_url: url,
     });
 
     if (error) {
