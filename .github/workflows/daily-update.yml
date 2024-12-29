@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-     - name: Check out repo
+      - name: Check out repo
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # fetch the full history so rebase works properly
+          fetch-depth: 0 # fetch the full history so rebase works properly
 
       - name: Pull and rebase to sync with remote
         run: |
