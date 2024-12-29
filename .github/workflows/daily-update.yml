@@ -2,8 +2,7 @@ name: Daily Update
 
 on:
   schedule:
-    # - cron: "0 0 * * *" # Runs at 00:00 UTC every day
-    - cron: "*/5 * * * *" # Runs every 5 minutes
+    - cron: "0 */12 * * *" # Runs every 12 hours (at 00:00 and 12:00 UTC)
   workflow_dispatch: # Allows manual triggering if needed
 
 permissions:
@@ -25,11 +24,11 @@ jobs:
 
       - name: Update README and commit
         run: |
-          echo "Updated on $(date)" >> README.md
+          echo " " >> README.md
           git config user.name "seb7wake"
           git config user.email "seb7wake@gmail.com"
           git add README.md
-          git commit -m "Daily README update"
+          git commit -m "Shipping changes"
 
       - name: Push changes
         run: |
