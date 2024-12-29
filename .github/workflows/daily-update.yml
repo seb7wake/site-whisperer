@@ -1,0 +1,27 @@
+name: Daily Update
+
+on:
+  schedule:
+    # - cron: "0 0 * * *" # Runs at 00:00 UTC every day
+    - cron: "*/5 * * * *" # Runs every 5 minutes
+  workflow_dispatch: # Allows manual triggering if needed
+
+jobs:
+  daily-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Update README
+        run: |
+          echo "Updated on $(date)" >> README.md
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "seb7wake"
+          git config user.email "seb7wake@gmail.com"
+          git add README.md
+          git commit -m "Daily README update"
+          git push
