@@ -60,17 +60,66 @@ const extractSections = ($: any, chunkSize = 500) => {
   return sections;
 };
 
+const extractLinks = ($: any, baseUrl: string): string[] => {
+  const links: string[] = [];
+  const urlObj = new URL(baseUrl);
+  const domain = urlObj.hostname;
+
+  $("a[href]").each((_, element) => {
+    const href = $(element).attr("href");
+    if (href) {
+      try {
+        const absoluteUrl = new URL(href, baseUrl);
+        // Only include links from same domain and with http(s) protocol
+        if (
+          absoluteUrl.hostname === domain &&
+          (absoluteUrl.protocol === "http:" ||
+            absoluteUrl.protocol === "https:")
+        ) {
+          links.push(absoluteUrl.href);
+        }
+      } catch (e) {
+        // Skip invalid URLs
+      }
+    }
+  });
+
+  return [...new Set(links)]; // Remove duplicates
+};
+
 export const scrape = async (url: string) => {
-  const html = await fetchPage(url);
-  const $ = load(html);
+  const visited = new Set<string>();
+  const toVisit = [url];
+  const maxPages = 5;
+  const pages: Array<{ url: string; title: string; sections: string[] }> = [];
 
-  const title = extractTitle($);
-  const sections = extractSections($);
+  while (toVisit.length > 0 && visited.size < maxPages) {
+    const currentUrl = toVisit.shift()!;
 
-  console.log(sections);
+    if (visited.has(currentUrl)) {
+      continue;
+    }
 
-  return {
-    title,
-    sections,
-  };
+    try {
+      const html = await fetchPage(currentUrl);
+      const $ = load(html);
+      visited.add(currentUrl);
+
+      const title = extractTitle($);
+      const sections = extractSections($);
+      pages.push({ url: currentUrl, title, sections });
+
+      // Get new links to visit
+      const links = extractLinks($, currentUrl);
+      for (const link of links) {
+        if (!visited.has(link) && !toVisit.includes(link)) {
+          toVisit.push(link);
+        }
+      }
+    } catch (error) {
+      console.error(`Error scraping ${currentUrl}:`, error);
+    }
+  }
+
+  return pages;
 };

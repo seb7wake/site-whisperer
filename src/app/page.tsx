@@ -9,23 +9,29 @@ export default function Home() {
   const [chats, setChats] = useState<any[]>([]);
   const [currentChat, setCurrentChat] = useState<any>(null);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     getChats();
   }, []);
 
   const getChats = async () => {
+    setIsLoading(true);
     const response = await fetch("/api/chats");
     const data = await response.json();
     setChats(data);
+    handleChatSelection(data[0]?.id);
+    setIsLoading(false);
   };
 
   const refetchChats = async () => {
+    setIsLoading(true);
     const response = await fetch("/api/chats");
     const data = await response.json();
     setChats(data);
-    setCurrentChat(data[0]); // Get the most recently added chat
+    handleChatSelection(data[0]?.id);
     setIsCreatingChat(false);
+    setIsLoading(false);
   };
 
   const handleChatSelection = async (chatId: string) => {
@@ -36,7 +42,6 @@ export default function Home() {
       },
     });
     const data = await response.json();
-    console.log("current chat", data);
     setCurrentChat(data.chat);
   };
 
@@ -56,6 +61,7 @@ export default function Home() {
           setCurrentChat={setCurrentChat}
           isCreatingChat={isCreatingChat}
           refetchChats={refetchChats}
+          isLoadingChats={isLoading}
         />
       </div>
     </div>

@@ -1,20 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const ChatBody = ({
   currentChat,
   setCurrentChat,
   isCreatingChat,
   refetchChats,
+  isLoadingChats,
 }: {
   currentChat: any;
   setCurrentChat: (chat: any) => void;
   isCreatingChat: boolean;
   refetchChats: () => void;
+  isLoadingChats: boolean;
 }) => {
   const [url, setUrl] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingNewChat, setLoadingNewChat] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [currentChat?.messages]);
 
   const handleCreateChat = async () => {
     setLoadingNewChat(true);
@@ -22,41 +33,55 @@ const ChatBody = ({
       method: "POST",
       body: JSON.stringify({ url }),
     });
-
     const data = await response.json();
     console.log(data);
     refetchChats();
     setLoadingNewChat(false);
   };
 
-  if (!currentChat && !isCreatingChat) {
-    return null;
-  }
+  const updateChatWithUserMessage = (prevChat: any) => ({
+    ...prevChat,
+    messages: [...prevChat?.messages, { role: "user", content: message }],
+  });
 
-  const handleSendMessage = async () => {
-    setIsLoading(true);
-    setMessage("");
-    setCurrentChat((prevChat: any) => ({
+  const updateChatWithAssistantMessage = (prevChat: any, response: any) => {
+    const prevMessages = Array.isArray(prevChat?.messages)
+      ? prevChat.messages
+      : [];
+    return {
       ...prevChat,
-      messages: [...prevChat?.messages, { role: "user", content: message }],
-    }));
+      messages: prevMessages.concat(response),
+    };
+  };
+
+  const sendMessage = async () => {
     const response = await fetch("/api/chat", {
       method: "POST",
       body: JSON.stringify({ message, chatId: currentChat.id }),
     });
-    const data = await response.json();
+    return await response.json();
+  };
+
+  const handleSendMessage = async () => {
+    setIsLoading(true);
+    setMessage("");
+    setCurrentChat(updateChatWithUserMessage);
+    const data = await sendMessage();
     console.log(data);
-    setCurrentChat((prevChat: any) => {
-      const prevMessages = Array.isArray(prevChat?.messages)
-        ? prevChat.messages
-        : [];
-      return {
-        ...prevChat,
-        messages: prevMessages.concat(data.response),
-      };
-    });
+    setCurrentChat((prevChat: any) =>
+      updateChatWithAssistantMessage(prevChat, data.response)
+    );
     setIsLoading(false);
   };
+
+  if (isLoadingChats) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-gray-300">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-lg animate-pulse">Loading your chat...</p>
+      </div>
+    );
+  }
 
   if (!currentChat && isCreatingChat) {
     return (
@@ -127,6 +152,7 @@ const ChatBody = ({
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </>
           )}
         </div>

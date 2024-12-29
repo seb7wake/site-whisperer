@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../lib/prisma";
 import { scrape } from "../../../lib/scraper";
-import { supabase } from "../../../lib/supabase";
-import OpenAI from "openai";
+import { embedAndStoreChunk } from "@/lib/openai";
 
 export async function POST(request: Request) {
   try {
@@ -22,21 +21,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const { title, sections } = await scrape(url);
+    const pages = await scrape(url);
     const shortUrl = new URL(url).origin + new URL(url).pathname;
 
     // Process sections in parallel for better performance
     await Promise.all(
-      sections.map((section) => embedAndStoreChunk(title, url, section))
+      pages.map((page) =>
+        embedAndStoreChunk(page.title, page.url, page.sections.join("\n"))
+      )
     );
+
+    console.log("pages:", pages);
 
     const newChat = await prisma.chat.create({
       data: {
-        title: title === "" ? "Untitled Chat" : title,
+        title: pages[0].title === "" ? "Untitled Chat" : pages[0].title,
         url,
         shortUrl,
         messages:
-          title === ""
+          pages[0].title === ""
             ? {
                 create: [
                   { content: "Sorry, I wasn't able to read the URL provided." },
@@ -55,34 +58,5 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     );
-  }
-}
-
-async function embedAndStoreChunk(title: string, url: string, content: string) {
-  try {
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: content,
-    });
-
-    const [{ embedding }] = embeddingResponse.data;
-
-    const { error } = await supabase.from("documents").insert({
-      title,
-      url,
-      content,
-      embedding,
-    });
-
-    if (error) {
-      throw new Error(`Failed to store embedding: ${error.message}`);
-    }
-  } catch (error) {
-    console.error("Error in embedAndStoreChunk:", error);
-    throw error; // Re-throw to be handled by the caller
   }
 }
