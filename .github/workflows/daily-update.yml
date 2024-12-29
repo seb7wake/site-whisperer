@@ -23,6 +23,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
+          git pull --rebase
           git config user.name "seb7wake"
           git config user.email "seb7wake@gmail.com"
           git add README.md
